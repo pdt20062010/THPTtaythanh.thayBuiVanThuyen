@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Đo khoảng cách bằng định lý sin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{box-sizing:border-box;font-family:'Segoe UI',sans-serif}
+body{margin:0;background:linear-gradient(135deg,#020617,#0f172a);color:white}
+
+header{text-align:center;padding:25px}
+header h1{color:#38bdf8;margin:0}
+header p{color:#94a3b8}
+
+.container{
+  width:95%;max-width:1200px;margin:auto;
+  display:grid;grid-template-columns:1.4fr 1fr;gap:20px
+}
+
+.card{
+  background:rgba(15,23,42,.85);
+  border-radius:18px;padding:20px;
+  box-shadow:0 0 25px rgba(0,200,255,.15)
+}
+
+label{display:block;margin-top:10px;color:#94a3b8}
+
+input,select{
+  width:100%;padding:10px;margin-top:5px;
+  border-radius:10px;border:1px solid #1e293b;
+  background:#020617;color:white
+}
+
+button{
+  margin-top:15px;padding:10px;
+  border:none;border-radius:10px;
+  background:linear-gradient(135deg,#38bdf8,#0ea5e9);
+  color:white;cursor:pointer
+}
+
+.result{margin-top:15px;color:#22c55e;line-height:1.6}
+
+canvas{
+  width:100%;background:#020617;border-radius:10px
+}
+
+.note{color:#94a3b8;font-size:13px;margin-top:10px}
+
+.formula{
+  margin-top:10px;background:#020617;
+  padding:10px;border-radius:10px;font-size:14px
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>📐 Đo khoảng cách tới công trình</h1>
+  <p>Dùng định lý sin – có phân biệt vị trí ban đầu và vị trí sau</p>
+</header>
+
+<div class="container">
+
+<div class="card">
+  <h3>🔢 Nhập dữ liệu</h3>
+
+  <label>Chọn hướng di chuyển</label>
+  <select id="start">
+    <option value="B">Đứng ở B → đi tới C</option>
+    <option value="C">Đứng ở C → đi tới B</option>
+  </select>
+
+  <label>Góc tại B (∠ABC)</label>
+  <input id="B" type="number">
+
+  <label>Góc tại C (∠ACB)</label>
+  <input id="C" type="number">
+
+  <label>Khoảng cách BC (m)</label>
+  <input id="BC" type="number">
+
+  <button onclick="calc()">Tính</button>
+
+  <div class="result" id="kq"></div>
+
+  <div class="formula">
+    AB = BC × sin(C) / sin(A)<br>
+    AC = BC × sin(B) / sin(A)<br>
+    A = 180° - B - C
+  </div>
+
+  <div class="note">
+    AB: từ B → công trình<br>
+    AC: từ C → công trình
+  </div>
+</div>
+
+<div class="card">
+  <h3>📊 Minh họa</h3>
+  <canvas id="cv" height="260"></canvas>
+
+  <div class="note">
+    A: công trình<br>
+    B: vị trí 1<br>
+    C: vị trí 2<br>
+    Góc tại B, C là góc nhìn lên công trình
+  </div>
+</div>
+
+</div>
+
+<script>
+function calc(){
+  let Bv=+B.value;
+  let Cv=+C.value;
+  let BCv=+BC.value;
+  let start=startSelect.value;
+
+  if(!Bv||!Cv||!BCv){
+    kq.innerHTML="❌ Nhập thiếu!";
+    return;
+  }
+
+  let A=180-Bv-Cv;
+  let rad=Math.PI/180;
+
+  let AB=BCv*Math.sin(Cv*rad)/Math.sin(A*rad);
+  let AC=BCv*Math.sin(Bv*rad)/Math.sin(A*rad);
+
+  if(start==="B"){
+    kq.innerHTML=
+      `📍 Khoảng cách từ vị trí ban đầu (B) → công trình: <b>${AB.toFixed(2)} m</b><br>
+       📍 Khoảng cách từ vị trí lúc sau (C) → công trình: <b>${AC.toFixed(2)} m</b>`;
+  } else {
+    kq.innerHTML=
+      `📍 Khoảng cách từ vị trí ban đầu (C) → công trình: <b>${AC.toFixed(2)} m</b><br>
+       📍 Khoảng cách từ vị trí lúc sau (B) → công trình: <b>${AB.toFixed(2)} m</b>`;
+  }
+
+  draw(start);
+}
+
+function draw(start){
+  let ctx=cv.getContext("2d");
+  ctx.clearRect(0,0,cv.width,cv.height);
+
+  let Bp=[60,220],Cp=[260,220],Ap=[160,60];
+
+  // lấy góc người dùng nhập
+  let Bv = +B.value || 0;
+  let Cv = +C.value || 0;
+
+  // vẽ tam giác
+  ctx.strokeStyle="#38bdf8";
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(...Bp);
+  ctx.lineTo(...Cp);
+  ctx.lineTo(...Ap);
+  ctx.closePath();
+  ctx.stroke();
+
+  // tên điểm
+  ctx.fillStyle="white";
+  ctx.fillText("B",Bp[0]-10,Bp[1]+15);
+  ctx.fillText("C",Cp[0]+5,Cp[1]+15);
+  ctx.fillText("A",Ap[0],Ap[1]-10);
+
+  // 🔥 hiển thị góc tại B
+  ctx.fillStyle="#facc15"; // vàng cho nổi
+  ctx.fillText(Bv + "°", Bp[0]+10, Bp[1]-10);
+
+  // 🔥 hiển thị góc tại C
+  ctx.fillText(Cv + "°", Cp[0]-30, Cp[1]-10);
+
+  // đánh dấu vị trí ban đầu
+  ctx.fillStyle="#22c55e";
+  if(start==="B"){
+    ctx.fillText("Start",Bp[0]-20,Bp[1]-20);
+  } else {
+    ctx.fillText("Start",Cp[0]-20,Cp[1]-20);
+  }
+}
+
+let startSelect=document.getElementById("start");
+draw("B");
+</script>
+
+</body>
+</html>
